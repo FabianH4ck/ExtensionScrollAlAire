@@ -1,414 +1,406 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EyeScroll</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <title>AirScrollTikTok</title>
   <style>
     :root {
-      --bg: #08080f;
-      --surface: #111120;
-      --border: #1e1e38;
-      --accent: #5b5ef4;
-      --accent2: #a78bfa;
-      --glow: rgba(91, 94, 244, 0.35);
-      --text: #e8e8f0;
-      --muted: #5a5a7a;
-      --success: #34d399;
-      --danger: #f87171;
+      --bg: #080913;
+      --panel: #111426;
+      --panel-2: #171a31;
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f7f4ff;
+      --muted: #a7a5be;
+      --soft: #74718c;
+      --cyan: #76f5ff;
+      --pink: #ff62de;
+      --violet: #9c7cff;
+      --green: #36d99a;
+      --red: #ff6f91;
+      --shadow: rgba(0, 0, 0, 0.38);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      width: 320px;
-      background: var(--bg);
+      width: 332px;
+      min-height: 480px;
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font: 14px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(118, 245, 255, 0.18), transparent 30%),
+        radial-gradient(circle at 100% 0%, rgba(255, 98, 222, 0.28), transparent 38%),
+        linear-gradient(160deg, #07192d 0%, #100b28 52%, #240525 100%);
       overflow: hidden;
     }
 
-    /* Ambient background */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -60px; left: 50%;
-      transform: translateX(-50%);
-      width: 220px; height: 220px;
-      background: radial-gradient(circle, rgba(91,94,244,0.18) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+    .app {
+      padding: 16px;
     }
 
-    .container { position: relative; z-index: 1; padding: 20px; }
-
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
+    .hero {
+      display: grid;
+      grid-template-columns: 58px 1fr;
       gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .eye-logo {
-      width: 40px; height: 40px;
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .eye-logo svg {
-      width: 100%; height: 100%;
-      filter: drop-shadow(0 0 8px var(--glow));
-    }
-
-    .header-text h1 {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 18px;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 30%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header-text p {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 300;
-      letter-spacing: 0.3px;
-      margin-top: 1px;
-    }
-
-    /* Status badge */
-    .status-badge {
-      display: flex;
       align-items: center;
-      gap: 7px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-bottom: 16px;
-      transition: all 0.3s ease;
-    }
-
-    .status-badge.active {
-      border-color: rgba(52, 211, 153, 0.4);
-      background: rgba(52, 211, 153, 0.07);
-    }
-
-    .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-    }
-
-    .status-badge.active .status-dot {
-      background: var(--success);
-      box-shadow: 0 0 6px var(--success);
-      animation: pulse 2s ease infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.15); }
-    }
-
-    .status-text {
-      font-size: 12px;
-      color: var(--muted);
-      transition: color 0.3s;
-    }
-    .status-badge.active .status-text { color: var(--success); }
-
-    /* Toggle button */
-    .toggle-btn {
-      width: 100%;
-      padding: 13px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      letter-spacing: 0.2px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .toggle-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-
-    .toggle-btn span { position: relative; z-index: 1; }
-
-    .toggle-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-    .toggle-btn:hover::before { opacity: 0.15; }
-
-    .toggle-btn.on {
-      border-color: var(--accent);
-      box-shadow: 0 0 20px var(--glow);
-    }
-    .toggle-btn.on::before { opacity: 0.2; }
-    .toggle-btn.on:hover::before { opacity: 0.3; }
-
-    /* Divider */
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin-bottom: 16px;
-    }
-
-    /* Settings */
-    .settings-label {
-      font-family: 'Syne', sans-serif;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .setting-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       margin-bottom: 14px;
     }
 
-    .setting-info { flex: 1; }
-    .setting-info .name {
-      font-size: 13px;
-      color: var(--text);
-      font-weight: 400;
-    }
-    .setting-info .desc {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 1px;
+    .brand-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(31, 73, 118, 0.88), rgba(218, 9, 161, 0.82));
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 12px 28px var(--shadow), 0 0 24px rgba(255, 98, 222, 0.2);
+      overflow: hidden;
     }
 
-    /* Slider */
+    .brand-icon svg {
+      width: 49px;
+      height: 49px;
+      filter: drop-shadow(0 0 6px rgba(118, 245, 255, 0.95));
+    }
+
+    .title h1 {
+      font-size: 20px;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .title p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(17, 20, 38, 0.82);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--soft);
+      flex: 0 0 auto;
+    }
+
+    .status-badge.active .status-dot,
+    .status.active .status-dot {
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(54, 217, 154, 0.9);
+    }
+
+    .status-text {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status.active .status-text { color: #b8ffd9; }
+
+    .motion-tag {
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .toggle-btn {
+      width: 100%;
+      height: 46px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 8px;
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(118, 245, 255, 0.16), rgba(255, 98, 222, 0.16));
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .toggle-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(118, 245, 255, 0.55);
+      box-shadow: 0 14px 34px rgba(118, 245, 255, 0.12);
+    }
+
+    .toggle-btn.on {
+      border-color: rgba(54, 217, 154, 0.56);
+      background: linear-gradient(135deg, rgba(54, 217, 154, 0.22), rgba(118, 245, 255, 0.14));
+    }
+
+    .section {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 13px;
+    }
+
+    .control h2 {
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .control p {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
     .slider-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .slider-wrap input[type=range] {
-      -webkit-appearance: none;
-      width: 90px;
+    input[type="range"] {
+      width: 88px;
       height: 4px;
-      border-radius: 2px;
-      background: var(--border);
+      appearance: none;
+      -webkit-appearance: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
       outline: none;
-      cursor: pointer;
     }
 
-    .slider-wrap input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px;
+    input[type="range"]::-webkit-slider-thumb {
+      width: 15px;
+      height: 15px;
+      border: 2px solid #fff;
       border-radius: 50%;
-      background: var(--accent2);
-      box-shadow: 0 0 6px rgba(167,139,250,0.5);
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--pink);
+      box-shadow: 0 0 12px rgba(255, 98, 222, 0.78);
       cursor: pointer;
-      transition: transform 0.15s;
     }
-    .slider-wrap input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
     .slider-val {
-      font-size: 11px;
-      color: var(--accent2);
-      font-family: 'Syne', sans-serif;
-      font-weight: 600;
-      min-width: 28px;
+      min-width: 30px;
+      color: var(--cyan);
+      font-size: 12px;
+      font-weight: 800;
       text-align: right;
     }
 
-    /* Zone preview */
-    .zone-preview {
-      width: 100%;
-      height: 56px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
+    .gesture-map {
       position: relative;
+      height: 116px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
       overflow: hidden;
-      margin-top: 4px;
+      background:
+        linear-gradient(180deg, rgba(118, 245, 255, 0.13), transparent 32%),
+        linear-gradient(0deg, rgba(255, 111, 145, 0.14), transparent 32%),
+        rgba(17, 20, 38, 0.72);
     }
 
-    .zone-top, .zone-bottom {
+    .zone-top,
+    .zone-bottom {
       position: absolute;
-      left: 0; right: 0;
-      height: 24%;
+      left: 0;
+      right: 0;
       display: flex;
       align-items: center;
-      padding-left: 10px;
-      font-size: 10px;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-      text-transform: uppercase;
-      transition: height 0.3s ease;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      transition: height 0.25s ease;
     }
 
     .zone-top {
       top: 0;
-      background: rgba(91, 94, 244, 0.15);
-      border-bottom: 1px dashed rgba(91,94,244,0.3);
-      color: var(--accent2);
+      height: 25%;
+      color: var(--cyan);
+      border-bottom: 1px dashed rgba(118, 245, 255, 0.36);
     }
 
     .zone-bottom {
       bottom: 0;
-      background: rgba(248, 113, 113, 0.12);
-      border-top: 1px dashed rgba(248,113,113,0.3);
-      color: var(--danger);
+      height: 25%;
+      color: #ff9eb5;
+      border-top: 1px dashed rgba(255, 111, 145, 0.36);
     }
 
     .zone-mid {
       position: absolute;
-      top: 24%; bottom: 24%;
-      left: 0; right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
+      inset: 25% 0;
+      display: grid;
+      place-items: center;
       color: var(--muted);
-      letter-spacing: 0.5px;
+      font-size: 11px;
+      text-align: center;
     }
 
-    /* Footer */
+    .gesture-hand {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      margin-bottom: 3px;
+      color: #fff;
+    }
+
     .footer {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-
-    .footer-note {
-      font-size: 10px;
+      margin-top: 13px;
       color: var(--muted);
+      font-size: 11px;
     }
 
     .cam-indicator {
       display: flex;
       align-items: center;
-      gap: 5px;
-      font-size: 10px;
-      color: var(--muted);
+      gap: 6px;
     }
-    .cam-indicator.active { color: var(--success); }
 
     .cam-dot {
-      width: 6px; height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--muted);
+      background: var(--soft);
     }
+
+    .cam-indicator.active {
+      color: #b8ffd9;
+    }
+
     .cam-indicator.active .cam-dot {
-      background: var(--success);
-      box-shadow: 0 0 4px var(--success);
+      background: var(--green);
+      box-shadow: 0 0 8px rgba(54, 217, 154, 0.8);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <div class="eye-logo">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="20" cy="20" rx="18" ry="10" stroke="url(#grad1)" stroke-width="1.8"/>
-          <circle cx="20" cy="20" r="6" fill="url(#grad2)" opacity="0.9"/>
-          <circle cx="20" cy="20" r="3" fill="#08080f"/>
-          <circle cx="22" cy="18" r="1.2" fill="white" opacity="0.8"/>
-          <defs>
-            <linearGradient id="grad1" x1="2" y1="20" x2="38" y2="20">
-              <stop offset="0%" stop-color="#5b5ef4"/>
-              <stop offset="100%" stop-color="#a78bfa"/>
-            </linearGradient>
-            <linearGradient id="grad2" x1="14" y1="14" x2="26" y2="26">
-              <stop offset="0%" stop-color="#5b5ef4"/>
-              <stop offset="100%" stop-color="#a78bfa"/>
-            </linearGradient>
-          </defs>
+  <main class="app">
+    <header class="hero">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 25C20 10 36 8 47 13" stroke="#c9d4ff" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
+          <path d="M23 32V24C23 20.5 28 19.8 29.5 23L34 32V13C34 9.8 39 9.8 39 13V35L45 22C46.4 19 51 21.2 49.7 24.2L44 38L49 36C53 34.4 55.6 39.6 51.7 41.6L45 45C42 56 25 56 20 46L13.5 32C12 28.8 16.8 26.5 18.5 29.6L23 38V32Z" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M23 32V24C23 20.5 28 19.8 29.5 23L34 32" stroke="#79f6ff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M52 16V30M52 16L47 21M52 16L57 21M52 48V34M52 48L47 43M52 48L57 43" stroke="#ff9ff2" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 42L14 46L18 48L14 50L12 54L10 50L6 48L10 46L12 42Z" fill="#76f5ff"/>
         </svg>
       </div>
-      <div class="header-text">
-        <h1>EyeScroll</h1>
-        <p>Controla tu feed con la mirada</p>
+      <div class="title">
+        <h1>AirScrollTikTok</h1>
+        <p>Scroll con movimiento del dedo</p>
       </div>
-    </div>
+    </header>
 
-    <!-- Status -->
-    <div class="status-badge" id="statusBadge">
-      <div class="status-dot"></div>
-      <span class="status-text" id="statusText">Inactivo — haz clic para activar</span>
-    </div>
+    <section class="status" id="statusBadge">
+      <div class="status-left">
+        <div class="status-dot"></div>
+        <span class="status-text" id="statusText">Inactivo - activa el seguimiento</span>
+      </div>
+      <span class="motion-tag">DEDO</span>
+    </section>
 
-    <!-- Main toggle -->
     <button class="toggle-btn" id="toggleBtn">
-      <span id="btnLabel">👁 Activar EyeScroll</span>
+      <span id="btnLabel">Activar control por dedo</span>
     </button>
 
-    <div class="divider"></div>
-
-    <!-- Settings -->
-    <div class="settings-label">Configuración</div>
-
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="name">Sensibilidad</div>
-        <div class="desc">Velocidad de desplazamiento</div>
+    <section class="section">
+      <div class="section-title">
+        <span>Ajustes de gesto</span>
+        <span>Mano</span>
       </div>
-      <div class="slider-wrap">
-        <input type="range" id="sensitivitySlider" min="1" max="10" value="5" />
-        <span class="slider-val" id="sensitivityVal">5</span>
-      </div>
-    </div>
 
-    <div class="setting-row">
-      <div class="setting-info">
-        <div class="name">Zona de activación</div>
-        <div class="desc">% de pantalla para activación</div>
+      <div class="control">
+        <div>
+          <h2>Sensibilidad</h2>
+          <p>Respuesta del scroll al mover el dedo.</p>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="sensitivitySlider" min="1" max="10" value="5" />
+          <span class="slider-val" id="sensitivityVal">5</span>
+        </div>
       </div>
-      <div class="slider-wrap">
-        <input type="range" id="zoneSlider" min="10" max="40" value="25" />
-        <span class="slider-val" id="zoneVal">25%</span>
+
+      <div class="control">
+        <div>
+          <h2>Zona de gesto</h2>
+          <p>Area superior e inferior que activa el cambio.</p>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="zoneSlider" min="10" max="40" value="25" />
+          <span class="slider-val" id="zoneVal">25%</span>
+        </div>
       </div>
-    </div>
 
-    <!-- Zone visual -->
-    <div class="zone-preview" id="zonePreview">
-      <div class="zone-top" id="zoneTop">↑ desplazar arriba</div>
-      <div class="zone-mid">— zona neutral —</div>
-      <div class="zone-bottom" id="zoneBot">↓ desplazar abajo</div>
-    </div>
+      <div class="gesture-map" id="zonePreview">
+        <div class="zone-top" id="zoneTop"><span>Dedo arriba</span><span>Subir</span></div>
+        <div class="zone-mid">
+          <div>
+            <div class="gesture-hand">
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 15V10C10 8 13 8 13 10V17L16 7C16.7 4.8 20 5.8 19.3 8L16.8 18L20 16.7C22.5 15.7 24 19 21.6 20.2L18 22C16 29 7 27 6 20L5 15.5C4.5 13.4 7.6 12.8 8.2 14.8L10 20V15Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            Zona neutral
+          </div>
+        </div>
+        <div class="zone-bottom" id="zoneBot"><span>Dedo abajo</span><span>Bajar</span></div>
+      </div>
+    </section>
 
-    <!-- Footer -->
-    <div class="footer">
-      <span class="footer-note">Cámara requerida</span>
+    <footer class="footer">
+      <span>Usa el dedo indice frente a la camara</span>
       <div class="cam-indicator" id="camIndicator">
         <div class="cam-dot"></div>
-        <span id="camText">Cámara apagada</span>
+        <span id="camText">Camara apagada</span>
       </div>
-    </div>
-  </div>
+    </footer>
+  </main>
 
   <script src="popup.js"></script>
 </body>

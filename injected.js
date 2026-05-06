@@ -1,5 +1,5 @@
 /**
- * EyeScroll — injected.js
+ * AirScrollTikTok - injected.js
  * Runs in PAGE context (not isolated), so window.Hands is accessible.
  * Communicates with content.js via postMessage.
  */

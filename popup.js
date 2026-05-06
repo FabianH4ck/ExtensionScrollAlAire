@@ -1,41 +1,23 @@
 let isActive = false;
 
-// Wire up event listeners once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  // Button click
   document.getElementById('toggleBtn').addEventListener('click', toggleExtension);
 
-  // Sensitivity slider
   document.getElementById('sensitivitySlider').addEventListener('input', (e) => {
-    document.getElementById('sensitivityVal').textContent = e.target.value;
-    chrome.storage.local.set({ sensitivity: parseInt(e.target.value) });
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          type: 'UPDATE_SENSITIVITY',
-          value: parseInt(e.target.value)
-        }).catch(() => {});
-      }
-    });
+    const value = parseInt(e.target.value, 10);
+    document.getElementById('sensitivityVal').textContent = value;
+    chrome.storage.local.set({ sensitivity: value });
+    sendToActiveTab({ type: 'UPDATE_SENSITIVITY', value });
   });
 
-  // Zone slider
   document.getElementById('zoneSlider').addEventListener('input', (e) => {
-    const val = parseInt(e.target.value);
-    document.getElementById('zoneVal').textContent = val + '%';
-    chrome.storage.local.set({ zoneSize: val });
-    updateZonePreview(val);
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          type: 'UPDATE_ZONE',
-          value: val
-        }).catch(() => {});
-      }
-    });
+    const value = parseInt(e.target.value, 10);
+    document.getElementById('zoneVal').textContent = value + '%';
+    chrome.storage.local.set({ zoneSize: value });
+    updateZonePreview(value);
+    sendToActiveTab({ type: 'UPDATE_ZONE', value });
   });
 
-  // Load saved state
   chrome.storage.local.get(['eyeScrollActive', 'sensitivity', 'zoneSize'], (data) => {
     if (data.eyeScrollActive) {
       isActive = true;
@@ -53,19 +35,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+function sendToActiveTab(message) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs[0]) return;
+    chrome.tabs.sendMessage(tabs[0].id, message).catch(() => {});
+  });
+}
+
 function toggleExtension() {
   isActive = !isActive;
   chrome.storage.local.set({ eyeScrollActive: isActive });
-
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        type: 'TOGGLE_EYESCROLL',
-        active: isActive
-      }).catch(() => {});
-    }
-  });
-
+  sendToActiveTab({ type: 'TOGGLE_EYESCROLL', active: isActive });
   updateUI(isActive);
 }
 
@@ -79,18 +59,18 @@ function updateUI(active) {
 
   if (active) {
     badge.classList.add('active');
-    statusText.textContent = 'Activo — rastreando tu mirada';
+    statusText.textContent = 'Activo - siguiendo tu dedo';
     btn.classList.add('on');
-    btnLabel.textContent = '⏹ Desactivar EyeScroll';
+    btnLabel.textContent = 'Desactivar control por dedo';
     camIndicator.classList.add('active');
-    camText.textContent = 'Cámara encendida';
+    camText.textContent = 'Camara encendida';
   } else {
     badge.classList.remove('active');
-    statusText.textContent = 'Inactivo — haz clic para activar';
+    statusText.textContent = 'Inactivo - activa el seguimiento';
     btn.classList.remove('on');
-    btnLabel.textContent = '👁 Activar EyeScroll';
+    btnLabel.textContent = 'Activar control por dedo';
     camIndicator.classList.remove('active');
-    camText.textContent = 'Cámara apagada';
+    camText.textContent = 'Camara apagada';
   }
 }
 

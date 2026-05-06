@@ -1,5 +1,5 @@
 /**
- * EyeScroll — Content Script (isolated world)
+ * AirScrollTikTok - Content Script (isolated world)
  * Injects webgazer.js + injected.js into the PAGE context,
  * then communicates with injected.js via postMessage.
  */
@@ -48,7 +48,7 @@ function createOverlay() {
     </style>
     <div class="es-pill">
       <div class="es-dot"></div>
-      <span>EyeScroll</span>
+      <span>AirScrollTikTok</span>
       <span class="es-zone-indicator" id="es-zone-label">— cargando...</span>
     </div>
   `;
@@ -99,14 +99,14 @@ window.addEventListener('message', (e) => {
   if (msg.status === 'ready') {
     injectedReady = true;
     // If we were waiting to start, send start now
-    if (isActive) sendToInjected({ type: 'START', sensitivity, zoneSize, mediapipePath: chrome.runtime.getURL('mediapipe/face_mesh/') });
+    if (isActive) sendToInjected({ type: 'START', sensitivity, zoneSize, mediapipePath: chrome.runtime.getURL('mediapipe/hands/') });
   }
   if (msg.status === 'started') {
     setZoneLabel('● observando', null);
   }
   if (msg.error) {
     setZoneLabel('⚠ ' + msg.error.substring(0, 30), null);
-    console.error('[EyeScroll] injected error:', msg.error);
+    console.error('[AirScrollTikTok] injected error:', msg.error);
   }
   if (msg.zone === 'up') setZoneLabel('↑ desplazando arriba', 'up');
   if (msg.zone === 'down') setZoneLabel('↓ desplazando abajo', 'down');
@@ -139,7 +139,7 @@ async function startEyeScroll() {
     }
   } catch (err) {
     setZoneLabel('⚠ ' + err.message.substring(0, 30), null);
-    console.error('[EyeScroll]', err);
+    console.error('[AirScrollTikTok]', err);
   }
 }
 

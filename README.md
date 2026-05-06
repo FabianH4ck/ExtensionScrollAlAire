@@ -1,4 +1,4 @@
-# 👁 EyeScroll — Chrome Extension
+# 👁 AirScrollTikTok — Chrome Extension
 
 Scroll TikTok, YouTube Shorts, and Instagram using only your eyes.
 
@@ -10,7 +10,7 @@ Scroll TikTok, YouTube Shorts, and Instagram using only your eyes.
 2. Enable **Developer mode** (toggle in the top right)
 3. Click **"Load unpacked"**
 4. Select the `eye-scroll-extension` folder
-5. The EyeScroll icon will appear in your toolbar
+5. The AirScrollTikTok icon will appear in your toolbar
 
 ---
 
