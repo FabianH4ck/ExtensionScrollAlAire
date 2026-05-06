@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EyeScroll</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #08080f;
+      --surface: #111120;
+      --border: #1e1e38;
+      --accent: #5b5ef4;
+      --accent2: #a78bfa;
+      --glow: rgba(91, 94, 244, 0.35);
+      --text: #e8e8f0;
+      --muted: #5a5a7a;
+      --success: #34d399;
+      --danger: #f87171;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      overflow: hidden;
+    }
+
+    /* Ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(91,94,244,0.18) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { position: relative; z-index: 1; padding: 20px; }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .eye-logo {
+      width: 40px; height: 40px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .eye-logo svg {
+      width: 100%; height: 100%;
+      filter: drop-shadow(0 0 8px var(--glow));
+    }
+
+    .header-text h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-text p {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.3px;
+      margin-top: 1px;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.active {
+      border-color: rgba(52, 211, 153, 0.4);
+      background: rgba(52, 211, 153, 0.07);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .status-badge.active .status-dot {
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.15); }
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+    .status-badge.active .status-text { color: var(--success); }
+
+    /* Toggle button */
+    .toggle-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.2px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toggle-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .toggle-btn span { position: relative; z-index: 1; }
+
+    .toggle-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .toggle-btn:hover::before { opacity: 0.15; }
+
+    .toggle-btn.on {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--glow);
+    }
+    .toggle-btn.on::before { opacity: 0.2; }
+    .toggle-btn.on:hover::before { opacity: 0.3; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 16px;
+    }
+
+    /* Settings */
+    .settings-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .setting-info { flex: 1; }
+    .setting-info .name {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 400;
+    }
+    .setting-info .desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* Slider */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider-wrap input[type=range] {
+      -webkit-appearance: none;
+      width: 90px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--accent2);
+      box-shadow: 0 0 6px rgba(167,139,250,0.5);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .slider-wrap input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    .slider-val {
+      font-size: 11px;
+      color: var(--accent2);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* Zone preview */
+    .zone-preview {
+      width: 100%;
+      height: 56px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .zone-top, .zone-bottom {
+      position: absolute;
+      left: 0; right: 0;
+      height: 24%;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      transition: height 0.3s ease;
+    }
+
+    .zone-top {
+      top: 0;
+      background: rgba(91, 94, 244, 0.15);
+      border-bottom: 1px dashed rgba(91,94,244,0.3);
+      color: var(--accent2);
+    }
+
+    .zone-bottom {
+      bottom: 0;
+      background: rgba(248, 113, 113, 0.12);
+      border-top: 1px dashed rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+
+    .zone-mid {
+      position: absolute;
+      top: 24%; bottom: 24%;
+      left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-note {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .cam-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .cam-indicator.active { color: var(--success); }
+
+    .cam-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .cam-indicator.active .cam-dot {
+      background: var(--success);
+      box-shadow: 0 0 4px var(--success);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="eye-logo">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="20" cy="20" rx="18" ry="10" stroke="url(#grad1)" stroke-width="1.8"/>
+          <circle cx="20" cy="20" r="6" fill="url(#grad2)" opacity="0.9"/>
+          <circle cx="20" cy="20" r="3" fill="#08080f"/>
+          <circle cx="22" cy="18" r="1.2" fill="white" opacity="0.8"/>
+          <defs>
+            <linearGradient id="grad1" x1="2" y1="20" x2="38" y2="20">
+              <stop offset="0%" stop-color="#5b5ef4"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+            <linearGradient id="grad2" x1="14" y1="14" x2="26" y2="26">
+              <stop offset="0%" stop-color="#5b5ef4"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>EyeScroll</h1>
+        <p>Controla tu feed con la mirada</p>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status-badge" id="statusBadge">
+      <div class="status-dot"></div>
+      <span class="status-text" id="statusText">Inactivo — haz clic para activar</span>
+    </div>
+
+    <!-- Main toggle -->
+    <button class="toggle-btn" id="toggleBtn">
+      <span id="btnLabel">👁 Activar EyeScroll</span>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Settings -->
+    <div class="settings-label">Configuración</div>
+
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="name">Sensibilidad</div>
+        <div class="desc">Velocidad de desplazamiento</div>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="sensitivitySlider" min="1" max="10" value="5" />
+        <span class="slider-val" id="sensitivityVal">5</span>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-info">
+        <div class="name">Zona de activación</div>
+        <div class="desc">% de pantalla para activación</div>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" id="zoneSlider" min="10" max="40" value="25" />
+        <span class="slider-val" id="zoneVal">25%</span>
+      </div>
+    </div>
+
+    <!-- Zone visual -->
+    <div class="zone-preview" id="zonePreview">
+      <div class="zone-top" id="zoneTop">↑ desplazar arriba</div>
+      <div class="zone-mid">— zona neutral —</div>
+      <div class="zone-bottom" id="zoneBot">↓ desplazar abajo</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="footer-note">Cámara requerida</span>
+      <div class="cam-indicator" id="camIndicator">
+        <div class="cam-dot"></div>
+        <span id="camText">Cámara apagada</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

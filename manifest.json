@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "EyeScroll",
+  "version": "1.1.0",
+  "description": "Haz scroll en TikTok, YouTube e Instagram usando solo tus ojos.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://www.tiktok.com/*",
+    "https://www.instagram.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.tiktok.com/*",
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js",
+        "mediapipe/hands/*",
+        "mediapipe/camera_utils/*"
+      ],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.tiktok.com/*",
+        "https://www.instagram.com/*"
+      ]
+    }
+  ]
+}
