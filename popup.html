@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AirScrollTikTok</title>
+  <title>ScrollSense</title>
   <style>
     :root {
-      --bg: #080913;
-      --panel: #111426;
-      --panel-2: #171a31;
+      --bg: #0a0a0a;
+      --panel: #111111;
       --border: rgba(255, 255, 255, 0.1);
       --text: #f7f4ff;
       --muted: #a7a5be;
       --soft: #74718c;
-      --cyan: #76f5ff;
-      --pink: #ff62de;
-      --violet: #9c7cff;
+      --cyan: #00f2fe;    /* TikTok Cyan */
+      --pink: #fe0979;    /* TikTok Pink */
+      --red: #ff0000;     /* YouTube Red */
+      --ig-orange: #fcb045; /* Instagram */
+      --ig-pink: #fd1d1d;   /* Instagram */
+      --ig-purple: #833ab4; /* Instagram */
       --green: #36d99a;
-      --red: #ff6f91;
       --shadow: rgba(0, 0, 0, 0.38);
     }
 
@@ -29,9 +30,11 @@
       color: var(--text);
       font: 14px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at 8% 0%, rgba(118, 245, 255, 0.18), transparent 30%),
-        radial-gradient(circle at 100% 0%, rgba(255, 98, 222, 0.28), transparent 38%),
-        linear-gradient(160deg, #07192d 0%, #100b28 52%, #240525 100%);
+        radial-gradient(circle at 0% 10%, rgba(255, 0, 0, 0.18), transparent 35%),
+        radial-gradient(circle at 100% 10%, rgba(0, 242, 254, 0.15), transparent 35%),
+        radial-gradient(circle at 50% 100%, rgba(131, 58, 180, 0.2), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(253, 29, 29, 0.15), transparent 30%),
+        #0a0a0a;
       overflow: hidden;
     }
 
@@ -53,23 +56,20 @@
       border-radius: 14px;
       display: grid;
       place-items: center;
-      background: linear-gradient(135deg, rgba(31, 73, 118, 0.88), rgba(218, 9, 161, 0.82));
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 12px 28px var(--shadow), 0 0 24px rgba(255, 98, 222, 0.2);
+      background: #111;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 12px 28px var(--shadow), 0 0 20px rgba(255, 255, 255, 0.05);
       overflow: hidden;
-    }
-
-    .brand-icon svg {
-      width: 49px;
-      height: 49px;
-      filter: drop-shadow(0 0 6px rgba(118, 245, 255, 0.95));
     }
 
     .title h1 {
       font-size: 20px;
       line-height: 1.05;
       font-weight: 800;
-      letter-spacing: 0;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #ff0000, #fd1d1d, #833ab4, #00f2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .title p {
@@ -87,7 +87,8 @@
       margin-bottom: 12px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: rgba(17, 20, 38, 0.82);
+      background: rgba(17, 17, 17, 0.8);
+      backdrop-filter: blur(8px);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     }
 
@@ -123,35 +124,38 @@
     .status.active .status-text { color: #b8ffd9; }
 
     .motion-tag {
-      color: var(--cyan);
-      font-size: 11px;
+      color: #fff;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, var(--red), var(--ig-purple));
+      padding: 2px 6px;
+      border-radius: 4px;
     }
 
     .toggle-btn {
       width: 100%;
       height: 46px;
-      border: 1px solid rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       color: var(--text);
-      background: linear-gradient(135deg, rgba(118, 245, 255, 0.16), rgba(255, 98, 222, 0.16));
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.15), rgba(131, 58, 180, 0.15), rgba(0, 242, 254, 0.15));
       font: inherit;
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      transition: all 0.2s ease;
     }
 
     .toggle-btn:hover {
       transform: translateY(-1px);
-      border-color: rgba(118, 245, 255, 0.55);
-      box-shadow: 0 14px 34px rgba(118, 245, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 14px 34px rgba(255, 255, 255, 0.1);
     }
 
     .toggle-btn.on {
-      border-color: rgba(54, 217, 154, 0.56);
-      background: linear-gradient(135deg, rgba(54, 217, 154, 0.22), rgba(118, 245, 255, 0.14));
+      border-color: rgba(54, 217, 154, 0.6);
+      background: linear-gradient(135deg, rgba(54, 217, 154, 0.2), rgba(0, 242, 254, 0.15));
     }
 
     .section {
@@ -214,14 +218,14 @@
       border-radius: 50%;
       appearance: none;
       -webkit-appearance: none;
-      background: var(--pink);
-      box-shadow: 0 0 12px rgba(255, 98, 222, 0.78);
+      background: var(--ig-purple);
+      box-shadow: 0 0 12px rgba(131, 58, 180, 0.8);
       cursor: pointer;
     }
 
     .slider-val {
       min-width: 30px;
-      color: var(--cyan);
+      color: #fff;
       font-size: 12px;
       font-weight: 800;
       text-align: right;
@@ -234,9 +238,9 @@
       border-radius: 8px;
       overflow: hidden;
       background:
-        linear-gradient(180deg, rgba(118, 245, 255, 0.13), transparent 32%),
-        linear-gradient(0deg, rgba(255, 111, 145, 0.14), transparent 32%),
-        rgba(17, 20, 38, 0.72);
+        linear-gradient(180deg, rgba(255, 0, 0, 0.12), transparent 35%),
+        linear-gradient(0deg, rgba(0, 242, 254, 0.12), transparent 35%),
+        rgba(17, 17, 17, 0.7);
     }
 
     .zone-top,
@@ -257,15 +261,15 @@
     .zone-top {
       top: 0;
       height: 25%;
-      color: var(--cyan);
-      border-bottom: 1px dashed rgba(118, 245, 255, 0.36);
+      color: #ff6b6b;
+      border-bottom: 1px dashed rgba(255, 0, 0, 0.4);
     }
 
     .zone-bottom {
       bottom: 0;
       height: 25%;
-      color: #ff9eb5;
-      border-top: 1px dashed rgba(255, 111, 145, 0.36);
+      color: var(--cyan);
+      border-top: 1px dashed rgba(0, 242, 254, 0.4);
     }
 
     .zone-mid {
@@ -317,23 +321,36 @@
       background: var(--green);
       box-shadow: 0 0 8px rgba(54, 217, 154, 0.8);
     }
+
+    /* Social icons at the bottom */
+    .social-icons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+      opacity: 0.7;
+    }
+    
+    .social-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .yt-dot { background: var(--red); box-shadow: 0 0 5px var(--red); }
+    .ig-dot { background: linear-gradient(45deg, var(--ig-orange), var(--ig-pink), var(--ig-purple)); box-shadow: 0 0 5px var(--ig-pink); }
+    .tt-dot { background: var(--cyan); box-shadow: 0 0 5px var(--cyan); }
   </style>
 </head>
 <body>
   <main class="app">
     <header class="hero">
       <div class="brand-icon" aria-hidden="true">
-        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 25C20 10 36 8 47 13" stroke="#c9d4ff" stroke-width="3.5" stroke-linecap="round" opacity="0.85"/>
-          <path d="M23 32V24C23 20.5 28 19.8 29.5 23L34 32V13C34 9.8 39 9.8 39 13V35L45 22C46.4 19 51 21.2 49.7 24.2L44 38L49 36C53 34.4 55.6 39.6 51.7 41.6L45 45C42 56 25 56 20 46L13.5 32C12 28.8 16.8 26.5 18.5 29.6L23 38V32Z" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M23 32V24C23 20.5 28 19.8 29.5 23L34 32" stroke="#79f6ff" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M52 16V30M52 16L47 21M52 16L57 21M52 48V34M52 48L47 43M52 48L57 43" stroke="#ff9ff2" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M12 42L14 46L18 48L14 50L12 54L10 50L6 48L10 46L12 42Z" fill="#76f5ff"/>
-        </svg>
+        <img src="icons/IconoDef.png" alt="ScrollSense Icon" style="width: 100%; height: 100%; object-fit: cover;">
       </div>
       <div class="title">
-        <h1>AirScrollTikTok</h1>
-        <p>Scroll con movimiento del dedo</p>
+        <h1>ScrollSense</h1>
+        <p>Controla tus feeds con gestos</p>
       </div>
     </header>
 
@@ -394,7 +411,11 @@
     </section>
 
     <footer class="footer">
-      <span>Usa el dedo indice frente a la camara</span>
+      <div class="social-icons">
+        <div class="social-dot yt-dot" title="YouTube Shorts"></div>
+        <div class="social-dot ig-dot" title="Instagram Reels"></div>
+        <div class="social-dot tt-dot" title="TikTok"></div>
+      </div>
       <div class="cam-indicator" id="camIndicator">
         <div class="cam-dot"></div>
         <span id="camText">Camara apagada</span>

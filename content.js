@@ -1,5 +1,5 @@
 /**
- * AirScrollTikTok - Content Script (isolated world)
+ * ScrollSense - Content Script (isolated world)
  * Injects mediapipe + injected.js into the PAGE context,
  * then communicates with injected.js via postMessage.
  */
@@ -48,7 +48,7 @@ function createOverlay() {
     </style>
     <div class="es-pill">
       <div class="es-dot"></div>
-      <span>AirScrollTikTok</span>
+      <span>ScrollSense</span>
       <span class="es-zone-indicator" id="es-zone-label">— cargando...</span>
     </div>
   `;

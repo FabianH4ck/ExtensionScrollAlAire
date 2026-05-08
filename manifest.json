@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AirScrollTikTok",
+  "name": "ScrollSense",
   "version": "1.1.0",
   "description": "Haz scroll en TikTok, YouTube Shorts e Instagram moviendo el dedo frente a la camara.",
   "permissions": [
@@ -16,9 +16,9 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/IconoDef.png",
+      "48": "icons/IconoDef.png",
+      "128": "icons/IconoDef.png"
     }
   },
   "content_scripts": [
