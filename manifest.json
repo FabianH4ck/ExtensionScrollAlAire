@@ -37,6 +37,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "trustedtypes.js",
         "injected.js",
         "mediapipe/hands/*",
         "mediapipe/camera_utils/*"

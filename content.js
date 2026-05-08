@@ -123,10 +123,17 @@ async function startEyeScroll() {
 
     if (!injectedReady) {
       setZoneLabel('— cargando IA...', null);
+
+      // Paso 1: registrar política TrustedTypes ANTES de MediaPipe
+      // (necesario en YouTube, que aplica require-trusted-types-for 'script')
+      await injectScript(chrome.runtime.getURL('trustedtypes.js'));
+
+      // Paso 2: cargar MediaPipe en el contexto de la página
       await injectScript(chrome.runtime.getURL('mediapipe/camera_utils/camera_utils.js'));
       await injectScript(chrome.runtime.getURL('mediapipe/hands/hands.js'));
 
-      // injected.js will postMessage 'ready' back to us
+      // Paso 3: cargar injected.js (puente de mensajes)
+      // injected.js enviará postMessage 'ready' de vuelta
       await injectScript(chrome.runtime.getURL('injected.js'));
     } else {
       sendToInjected({ type: 'START', sensitivity, zoneSize, mediapipePath });
