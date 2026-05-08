@@ -1,6 +1,6 @@
 /**
  * AirScrollTikTok - Content Script (isolated world)
- * Injects webgazer.js + injected.js into the PAGE context,
+ * Injects mediapipe + injected.js into the PAGE context,
  * then communicates with injected.js via postMessage.
  */
 
@@ -87,10 +87,6 @@ function injectScript(url) {
   });
 }
 
-function injectInline(code) {
-  // Not used anymore due to CSP, replaced with postMessage
-}
-
 // ─── Listen to messages from injected.js ───────────────────────────────────
 window.addEventListener('message', (e) => {
   if (!e.data || e.data.source !== 'eyescroll-injected') return;
@@ -125,15 +121,13 @@ async function startEyeScroll() {
   try {
     const mediapipePath = chrome.runtime.getURL('mediapipe/hands/');
 
-    // Step 2: Load media_pipe hands into PAGE context
     if (!injectedReady) {
       setZoneLabel('— cargando IA...', null);
       await injectScript(chrome.runtime.getURL('mediapipe/camera_utils/camera_utils.js'));
       await injectScript(chrome.runtime.getURL('mediapipe/hands/hands.js'));
 
-      // Step 3: Load injected.js into PAGE context (sets up message bridge)
-      await injectScript(chrome.runtime.getURL('injected.js'));
       // injected.js will postMessage 'ready' back to us
+      await injectScript(chrome.runtime.getURL('injected.js'));
     } else {
       sendToInjected({ type: 'START', sensitivity, zoneSize, mediapipePath });
     }
@@ -165,12 +159,22 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-// Restore state on page load
+// ── FIX 3: Restaurar estado solo en páginas de contenido relevantes ──────────
+// Evita que la cámara arranque en /watch, /feed u otras páginas genéricas
+// de YouTube e Instagram donde el scroll snap no tiene sentido.
 chrome.storage.local.get(['eyeScrollActive', 'sensitivity', 'zoneSize'], (data) => {
   if (data.sensitivity) sensitivity = data.sensitivity;
   if (data.zoneSize) zoneSize = data.zoneSize;
   if (data.eyeScrollActive) {
-    isActive = true;
-    startEyeScroll();
+    const url = window.location.href;
+    const isRelevantPage =
+      url.includes('youtube.com/shorts') ||
+      url.includes('tiktok.com') ||
+      url.includes('instagram.com/reels') ||
+      url.includes('instagram.com/reel/');
+    if (isRelevantPage) {
+      isActive = true;
+      startEyeScroll();
+    }
   }
 });

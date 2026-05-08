@@ -10,7 +10,7 @@
   let zoneSize = 25;
   let gazeSmooth = [];
   const SMOOTH_FRAMES = 8;
-  
+
   let hands = null;
   let camera = null;
 
@@ -20,11 +20,12 @@
     return gazeSmooth.reduce((a, b) => a + b, 0) / gazeSmooth.length;
   }
 
+  // ── FIX 1: Corregida URL de Instagram Reels (era /reel, es /reels) ──────────
   function checkIsSnapPlatform() {
     const url = window.location.href;
     return (url.includes('youtube.com/shorts')) ||
            (url.includes('tiktok.com')) ||
-           (url.includes('instagram.com/reel'));
+           (url.includes('instagram.com/reels') || url.includes('instagram.com/reel/'));
   }
 
   let lastSnapTime = 0;
@@ -34,32 +35,93 @@
       return document.scrollingElement || window;
     }
     const style = window.getComputedStyle(node);
-    if (node.scrollHeight > node.clientHeight && 
+    if (node.scrollHeight > node.clientHeight &&
        (style.overflowY === 'scroll' || style.overflowY === 'auto' || style.overflowY === 'overlay')) {
       return node;
     }
     return getScrollableParent(node.parentNode);
   }
 
+  // ── FIX 2: navigateSnap con 3 estrategias para YouTube Shorts ───────────────
   function navigateSnap(direction) {
     const isDown = direction === 'down';
     const amount = isDown ? window.innerHeight : -window.innerHeight;
 
-    // Specific button fallback for YouTube Shorts (very reliable)
+    // ── YouTube Shorts ────────────────────────────────────────────────────────
     if (window.location.hostname.includes('youtube.com') && window.location.pathname.includes('/shorts')) {
-      const btnId = isDown ? 'navigation-button-down' : 'navigation-button-up';
-      const btn = document.getElementById(btnId)?.querySelector('button') || document.getElementById(btnId);
-      if (btn) {
-        btn.click();
+
+      // Estrategia 1: múltiples selectores CSS (cubre distintas versiones de YT)
+      const candidates = isDown
+        ? [
+            '#navigation-button-down button',
+            '#navigation-button-down',
+            'ytd-shorts [aria-label="Next video"]',
+            'ytd-shorts [aria-label="Siguiente video"]',
+            'ytd-shorts [aria-label="Vídeo siguiente"]',
+            'ytd-shorts-video-header-renderer [aria-label*="next" i]',
+            'ytd-shorts-video-header-renderer [aria-label*="siguiente" i]',
+            '.ytd-shorts [title*="next" i]',
+          ]
+        : [
+            '#navigation-button-up button',
+            '#navigation-button-up',
+            'ytd-shorts [aria-label="Previous video"]',
+            'ytd-shorts [aria-label="Video anterior"]',
+            'ytd-shorts [aria-label="Vídeo anterior"]',
+            'ytd-shorts-video-header-renderer [aria-label*="previous" i]',
+            'ytd-shorts-video-header-renderer [aria-label*="anterior" i]',
+            '.ytd-shorts [title*="previous" i]',
+          ];
+
+      for (const sel of candidates) {
+        try {
+          const btn = document.querySelector(sel);
+          if (btn) {
+            btn.click();
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // Estrategia 2: scroll directo sobre el contenedor ytd-shorts
+      const shortsPlayer = document.querySelector('ytd-shorts') ||
+                           document.querySelector('ytd-reel-player-overlay-renderer') ||
+                           document.querySelector('#shorts-player');
+      if (shortsPlayer) {
+        shortsPlayer.scrollBy({ top: amount, behavior: 'smooth' });
         return;
       }
+
+      // Estrategia 3 (fallback garantizado): simular tecla ArrowDown / ArrowUp
+      // YouTube Shorts escucha eventos de teclado a nivel del documento y del player
+      const activeEl = document.activeElement;
+      const targetEl = document.querySelector('ytd-shorts, #shorts-player, body') || document.body;
+      targetEl.focus({ preventScroll: true });
+
+      const keyEvent = {
+        key: isDown ? 'ArrowDown' : 'ArrowUp',
+        keyCode: isDown ? 40 : 38,
+        which: isDown ? 40 : 38,
+        code: isDown ? 'ArrowDown' : 'ArrowUp',
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      };
+
+      targetEl.dispatchEvent(new KeyboardEvent('keydown', keyEvent));
+      document.dispatchEvent(new KeyboardEvent('keydown', keyEvent));
+
+      // Restaurar el foco original para no interferir con el usuario
+      if (activeEl && activeEl !== targetEl) {
+        activeEl.focus({ preventScroll: true });
+      }
+      return;
     }
 
-    // Universal DOM Scroll for TikTok, Reels, etc.
+    // ── TikTok / Instagram Reels (scroll container DOM) ───────────────────────
     const centerEl = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2) || document.body;
     const scrollContainer = getScrollableParent(centerEl);
-    
-    // Perform smooth scroll, browser CSS scroll-snap will handle the rest
+
     if (scrollContainer.scrollBy) {
       scrollContainer.scrollBy({ top: amount, behavior: 'smooth' });
     } else {
@@ -72,7 +134,7 @@
       window.postMessage({ source: 'eyescroll-injected', zone: 'neutral' }, '*');
       return;
     }
-    
+
     const smoothY = smoothGaze(gazeData.y);
     const h = window.innerHeight;
     const topZone = h * (zoneSize / 100);
@@ -110,21 +172,21 @@
 
   function onResults(results) {
     if (!isActive) return;
-    
+
     const statusText = document.getElementById('eyescroll-status');
-    
+
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
       if (statusText) {
         statusText.textContent = '🟢 Mano detectada';
         statusText.style.background = 'rgba(52, 211, 153, 0.8)';
       }
-      
+
       // Index finger tip (landmark 8)
       const indexFingerTip = results.multiHandLandmarks[0][8];
-      
+
       // indexFingerTip.x and y are normalized [0.0, 1.0]
       const yPixels = indexFingerTip.y * window.innerHeight;
-      
+
       const dot = document.getElementById('webgazerGazeDot');
       if (dot) {
         dot.style.display = 'block';
@@ -149,7 +211,7 @@
       window.postMessage({ source: 'eyescroll-injected', error: 'Hands not found on window' }, '*');
       return;
     }
-    
+
     try {
       if (!hands) {
         if (!document.getElementById('eyescroll-camera-style')) {
@@ -159,7 +221,7 @@
             #webgazerVideoContainer {
               position: fixed !important;
               bottom: 16px !important; left: 16px !important; top: auto !important; right: auto !important;
-              width: 240px !important; height: 180px !important; /* Enlarged */
+              width: 240px !important; height: 180px !important;
               opacity: 1.0 !important; border-radius: 12px !important;
               overflow: hidden !important; z-index: 2147483645 !important;
               border: 2px solid rgba(91,94,244,0.8) !important;
@@ -167,7 +229,7 @@
               background: #000 !important;
             }
             #webgazerVideoFeed {
-              transform: scaleX(-1) !important; /* Mirror video */
+              transform: scaleX(-1) !important;
               pointer-events: none !important;
               width: 100% !important; height: 100% !important; object-fit: cover !important;
             }
@@ -181,12 +243,12 @@
               background: rgba(248, 113, 113, 0.8) !important;
               z-index: 2147483646 !important;
             }
-            #webgazerGazeDot { 
+            #webgazerGazeDot {
               position: fixed !important;
-              background: #5b5ef4 !important; 
-              border: 2px solid white !important; 
-              box-shadow: 0 0 10px rgba(91,94,244,0.8) !important; 
-              width: 14px !important; height: 14px !important; 
+              background: #5b5ef4 !important;
+              border: 2px solid white !important;
+              box-shadow: 0 0 10px rgba(91,94,244,0.8) !important;
+              width: 14px !important; height: 14px !important;
               margin-left: -7px !important; margin-top: -7px !important;
               opacity: 0.8 !important;
               border-radius: 50% !important;
@@ -203,16 +265,16 @@
         if (!vc) {
           vc = document.createElement('div');
           vc.id = 'webgazerVideoContainer';
-          
+
           videoEl = document.createElement('video');
           videoEl.id = 'webgazerVideoFeed';
           videoEl.autoplay = true;
           videoEl.playsInline = true;
-          
+
           const statusText = document.createElement('div');
           statusText.id = 'eyescroll-status';
           statusText.textContent = 'Iniciando cámara...';
-          
+
           vc.appendChild(videoEl);
           vc.appendChild(statusText);
 
@@ -244,7 +306,6 @@
               } catch (e) {
                 const st = document.getElementById('eyescroll-status');
                 if (st) {
-                  // Limit message length so it fits
                   st.textContent = '❌ ' + (e.message || 'Error').substring(0, 35);
                   st.style.background = 'rgba(248, 113, 113, 0.8)';
                 }
