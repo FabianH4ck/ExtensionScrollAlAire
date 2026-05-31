@@ -6,12 +6,11 @@ Navega por TikTok, YouTube Shorts e Instagram Reels moviendo el **dedo índice**
 
 ## Instalación (Modo desarrollador)
 
-1. npm install para las dependencias necesarias
-2. Abre Chrome y ve a `chrome://extensions`
-3. Activa el **Modo desarrollador** (toggle arriba a la derecha)
-4. Haz clic en **"Cargar extensión sin empaquetar"**
-5. Selecciona la carpeta del proyecto
-6. El ícono de ScrollSense aparecerá en la barra de herramientas
+1. Abre Chrome y ve a `chrome://extensions`
+2. Activa el **Modo desarrollador** (toggle arriba a la derecha)
+3. Haz clic en **"Cargar extensión sin empaquetar"**
+4. Selecciona la carpeta del proyecto
+5. El ícono de ScrollSense aparecerá en la barra de herramientas
 
 ---
 
