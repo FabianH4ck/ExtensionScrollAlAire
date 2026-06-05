@@ -23,31 +23,56 @@ function createOverlay() {
         z-index: 2147483647; pointer-events: none;
       }
       .es-pill {
-        background: rgba(8,8,15,0.88);
-        border: 1px solid rgba(91,94,244,0.4);
-        border-radius: 20px; padding: 6px 14px;
-        font-family: system-ui, sans-serif; font-size: 12px; color: #e8e8f0;
-        backdrop-filter: blur(8px); display: flex; align-items: center; gap: 7px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        background: rgba(5,5,12,0.92);
+        border: 1px solid rgba(94,234,212,0.25);
+        border-radius: 999px; padding: 6px 14px;
+        font-family: 'Sora', system-ui, sans-serif; font-size: 11px; color: #eeeefc;
+        backdrop-filter: blur(12px); display: flex; align-items: center; gap: 7px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5);
       }
       .es-dot {
         width: 7px; height: 7px; border-radius: 50%;
-        background: #5b5ef4; box-shadow: 0 0 6px rgba(91,94,244,0.8);
-        animation: es-pulse 2s ease infinite; flex-shrink: 0;
+        background: #8888aa; flex-shrink: 0;
+        transition: all 0.3s;
       }
-      @keyframes es-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-      .es-zone-indicator { font-size: 11px; color: #a78bfa; font-weight: 600; }
-      .es-zone-up   { color: #5b5ef4 !important; }
-      .es-zone-down { color: #f87171 !important; }
+      .es-dot.active {
+        background: #5EEAD4;
+        box-shadow: 0 0 10px rgba(94,234,212,0.8);
+        animation: es-pulse 2s ease-in-out infinite;
+      }
+      @keyframes es-pulse { 0%,100%{opacity:1;box-shadow:0 0 8px rgba(94,234,212,0.6)} 50%{opacity:0.5;box-shadow:0 0 20px rgba(94,234,212,0.9)} }
+      .es-zone-indicator { font-size: 10px; color: #8888aa; font-weight: 600; letter-spacing:0.02em; }
+      .es-zone-up   { color: #5EEAD4 !important; }
+      .es-zone-down { color: #F472B6 !important; }
+
+      /* ── Zone bars ─────────────────────────────────────── */
       .es-bar {
-        position: fixed; left: 0; right: 0; height: 3px;
-        z-index: 2147483646; pointer-events: none;
+        position: fixed; left: 0; right: 0; z-index: 2147483646;
+        pointer-events: none; transition: all 0.15s ease;
       }
-      #es-bar-top { top: 0; background: linear-gradient(90deg,transparent,rgba(91,94,244,0.6),transparent); }
-      #es-bar-bottom { bottom: 0; background: linear-gradient(90deg,transparent,rgba(248,113,113,0.6),transparent); }
+      #es-bar-top {
+        top: 0; height: 3px;
+        background: linear-gradient(90deg,transparent,rgba(94,234,212,0.4),transparent);
+        box-shadow: 0 0 0 transparent;
+      }
+      #es-bar-top.active {
+        height: 5px;
+        background: linear-gradient(90deg,transparent,rgba(94,234,212,0.8),transparent);
+        box-shadow: 0 2px 20px rgba(94,234,212,0.15);
+      }
+      #es-bar-bottom {
+        bottom: 0; height: 3px;
+        background: linear-gradient(90deg,transparent,rgba(244,114,182,0.4),transparent);
+        box-shadow: 0 0 0 transparent;
+      }
+      #es-bar-bottom.active {
+        height: 5px;
+        background: linear-gradient(90deg,transparent,rgba(244,114,182,0.8),transparent);
+        box-shadow: 0 -2px 20px rgba(244,114,182,0.15);
+      }
     </style>
     <div class="es-pill">
-      <div class="es-dot"></div>
+      <div class="es-dot" id="es-dot"></div>
       <span>ScrollSense</span>
       <span class="es-zone-indicator" id="es-zone-label">— cargando...</span>
     </div>
@@ -104,9 +129,19 @@ window.addEventListener('message', (e) => {
     setZoneLabel('⚠ ' + msg.error.substring(0, 30), null);
     console.error('[AirScrollTikTok] injected error:', msg.error);
   }
-  if (msg.zone === 'up') setZoneLabel('↑ desplazando arriba', 'up');
-  if (msg.zone === 'down') setZoneLabel('↓ desplazando abajo', 'down');
-  if (msg.zone === 'neutral') setZoneLabel('● observando', null);
+  if (msg.zone === 'up') {
+    setZoneLabel('↑ arriba', 'up');
+  }
+  if (msg.zone === 'down') {
+    setZoneLabel('↓ abajo', 'down');
+  }
+  if (msg.zone === 'neutral') {
+    if (msg.handDetected) {
+      setZoneLabel('● neutro', null);
+    } else {
+      setZoneLabel('— sin mano', null);
+    }
+  }
 });
 
 function sendToInjected(msg) {

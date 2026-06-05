@@ -131,12 +131,13 @@
 
   function handleGaze(gazeData) {
     if (!gazeData || !isActive) {
-      window.postMessage({ source: 'eyescroll-injected', zone: 'neutral' }, '*');
+      window.postMessage({ source: 'eyescroll-injected', zone: 'neutral', yPercent: -1, handDetected: false }, '*');
       return;
     }
 
     const smoothY = smoothGaze(gazeData.y);
     const h = window.innerHeight;
+    const yPercent = (smoothY / h) * 100;
     const topZone = h * (zoneSize / 100);
     const botZone = h * (1 - zoneSize / 100);
     const speed = 1 + (sensitivity / 10) * 5;
@@ -152,7 +153,7 @@
         const amount = -speed * ((topZone - smoothY) / topZone);
         window.scrollBy({ top: amount * 8, behavior: 'auto' });
       }
-      window.postMessage({ source: 'eyescroll-injected', zone: 'up' }, '*');
+      window.postMessage({ source: 'eyescroll-injected', zone: 'up', yPercent, handDetected: true }, '*');
     } else if (smoothY > botZone) {
       if (checkIsSnapPlatform()) {
         const now = Date.now();
@@ -164,9 +165,48 @@
         const amount = speed * ((smoothY - botZone) / (h - botZone));
         window.scrollBy({ top: amount * 8, behavior: 'auto' });
       }
-      window.postMessage({ source: 'eyescroll-injected', zone: 'down' }, '*');
+      window.postMessage({ source: 'eyescroll-injected', zone: 'down', yPercent, handDetected: true }, '*');
     } else {
-      window.postMessage({ source: 'eyescroll-injected', zone: 'neutral' }, '*');
+      window.postMessage({ source: 'eyescroll-injected', zone: 'neutral', yPercent, handDetected: true }, '*');
+    }
+  }
+
+  function updateCamGauge(yPercent, zone, handDetected) {
+    const gaugeH = 140;
+    const marker = document.getElementById('es-cam-marker');
+    const zoneTop = document.getElementById('es-cam-zone-top');
+    const zoneBot = document.getElementById('es-cam-zone-bot');
+    const pctLabel = document.getElementById('es-cam-pct');
+    const vc = document.getElementById('webgazerVideoContainer');
+
+    if (zoneTop) zoneTop.style.height = zoneSize + '%';
+    if (zoneBot) zoneBot.style.height = zoneSize + '%';
+
+    if (vc) {
+      vc.classList.remove('zone-up', 'zone-down');
+      if (zone === 'up') vc.classList.add('zone-up');
+      if (zone === 'down') vc.classList.add('zone-down');
+    }
+
+    if (marker) {
+      if (handDetected && yPercent >= 0) {
+        const pos = (yPercent / 100) * gaugeH;
+        marker.style.top = pos + 'px';
+        marker.className = 'visible';
+        if (zone === 'up') marker.classList.add('in-top');
+        else if (zone === 'down') marker.classList.add('in-bot');
+      } else {
+        marker.className = '';
+      }
+    }
+
+    if (pctLabel) {
+      if (handDetected && yPercent >= 0) {
+        pctLabel.textContent = Math.round(yPercent) + '%';
+        pctLabel.classList.add('visible');
+      } else {
+        pctLabel.classList.remove('visible');
+      }
     }
   }
 
@@ -175,17 +215,26 @@
 
     const statusText = document.getElementById('eyescroll-status');
 
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-      if (statusText) {
-        statusText.textContent = '🟢 Mano detectada';
-        statusText.style.background = 'rgba(52, 211, 153, 0.8)';
-      }
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        if (statusText) {
+          statusText.textContent = 'Mano detectada';
+          statusText.style.background = 'rgba(94, 234, 212, 0.7)';
+        }
 
       // Index finger tip (landmark 8)
       const indexFingerTip = results.multiHandLandmarks[0][8];
 
       // indexFingerTip.x and y are normalized [0.0, 1.0]
       const yPixels = indexFingerTip.y * window.innerHeight;
+      const yPercent = (yPixels / window.innerHeight) * 100;
+
+      // Determine zone for gauge feedback
+      const topZone = window.innerHeight * (zoneSize / 100);
+      const botZone = window.innerHeight * (1 - zoneSize / 100);
+      let zone = 'neutral';
+      if (yPixels < topZone) zone = 'up';
+      else if (yPixels > botZone) zone = 'down';
+      updateCamGauge(yPercent, zone, true);
 
       const dot = document.getElementById('webgazerGazeDot');
       if (dot) {
@@ -197,9 +246,10 @@
       handleGaze({ y: yPixels });
     } else {
       if (statusText) {
-        statusText.textContent = '🔴 Buscando mano...';
-        statusText.style.background = 'rgba(248, 113, 113, 0.8)';
-      }
+          statusText.textContent = 'Buscando mano...';
+          statusText.style.background = 'rgba(244, 114, 182, 0.5)';
+        }
+      updateCamGauge(-1, 'neutral', false);
       const dot = document.getElementById('webgazerGazeDot');
       if (dot) dot.style.display = 'none';
       handleGaze(null);
@@ -218,44 +268,104 @@
           const style = document.createElement('style');
           style.id = 'eyescroll-camera-style';
           style.textContent = `
-            #webgazerVideoContainer {
-              position: fixed !important;
-              bottom: 16px !important; left: 16px !important; top: auto !important; right: auto !important;
-              width: 240px !important; height: 180px !important;
-              opacity: 1.0 !important; border-radius: 12px !important;
-              overflow: hidden !important; z-index: 2147483645 !important;
-              border: 2px solid rgba(91,94,244,0.8) !important;
-              box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
-              background: #000 !important;
-            }
+              #webgazerVideoContainer {
+                position: fixed !important;
+                bottom: 16px !important; left: 16px !important; top: auto !important; right: auto !important;
+                width: 240px !important; height: 180px !important;
+                opacity: 1.0 !important; border-radius: 12px !important;
+                overflow: hidden !important; z-index: 2147483645 !important;
+                border: 2px solid rgba(94,234,212,0.6) !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 30px rgba(94,234,212,0.08) !important;
+                background: #05050C !important;
+                transition: border-color 0.2s, box-shadow 0.2s;
+              }
+              #webgazerVideoContainer.zone-up {
+                border-color: rgba(94,234,212,1) !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 40px rgba(94,234,212,0.5) !important;
+              }
+              #webgazerVideoContainer.zone-down {
+                border-color: rgba(244,114,182,1) !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 40px rgba(244,114,182,0.5) !important;
+              }
             #webgazerVideoFeed {
               transform: scaleX(-1) !important;
               pointer-events: none !important;
               width: 100% !important; height: 100% !important; object-fit: cover !important;
             }
             #eyescroll-status {
-              position: absolute !important;
-              top: 8px !important; left: 8px !important;
-              padding: 4px 8px !important;
-              border-radius: 6px !important;
-              font-family: sans-serif !important; font-size: 11px !important;
-              color: white !important; font-weight: bold !important;
-              background: rgba(248, 113, 113, 0.8) !important;
-              z-index: 2147483646 !important;
-            }
-            #webgazerGazeDot {
-              position: fixed !important;
-              background: #5b5ef4 !important;
-              border: 2px solid white !important;
-              box-shadow: 0 0 10px rgba(91,94,244,0.8) !important;
-              width: 14px !important; height: 14px !important;
-              margin-left: -7px !important; margin-top: -7px !important;
-              opacity: 0.8 !important;
-              border-radius: 50% !important;
-              pointer-events: none !important;
-              z-index: 2147483647 !important;
-              transition: left 0.1s, top 0.1s !important;
-            }
+                position: absolute !important;
+                top: 8px !important; left: 8px !important;
+                padding: 3px 8px !important;
+                border-radius: 999px !important;
+                font-family: 'Sora', system-ui, sans-serif !important; font-size: 10px !important;
+                color: white !important; font-weight: 600 !important;
+                background: rgba(244, 114, 182, 0.7) !important;
+                backdrop-filter: blur(4px) !important;
+                z-index: 2147483646 !important;
+                letter-spacing: 0.02em !important;
+                transition: background 0.2s;
+              }
+
+              /* ── In-camera gauge ──────────────────────── */
+              #es-cam-gauge {
+                position: absolute !important;
+                right: 6px !important; top: 50% !important;
+                transform: translateY(-50%) !important;
+                width: 4px; height: 140px;
+                border-radius: 999px;
+                background: rgba(255,255,255,0.08);
+                overflow: visible;
+                z-index: 10;
+              }
+              .es-cam-zone {
+                position: absolute; left: 0; right: 0;
+                border-radius: 999px;
+                transition: height 0.25s;
+              }
+              .es-cam-zone-top {
+                top: 0;
+                background: rgba(94,234,212,0.35);
+                border: 1px solid rgba(94,234,212,0.3);
+              }
+              .es-cam-zone-bot {
+                bottom: 0;
+                background: rgba(244,114,182,0.35);
+                border: 1px solid rgba(244,114,182,0.3);
+              }
+              #es-cam-marker {
+                position: absolute !important;
+                left: 50% !important;
+                width: 12px; height: 12px;
+                margin-left: -6px !important; margin-top: -6px !important;
+                border-radius: 50%;
+                background: #5EEAD4;
+                border: 2px solid #05050C;
+                box-shadow: 0 0 10px rgba(94,234,212,0.9);
+                transition: top 0.1s ease, opacity 0.3s, background 0.15s, box-shadow 0.15s;
+                opacity: 0;
+                z-index: 11;
+              }
+              #es-cam-marker.visible { opacity: 1; }
+              #es-cam-marker.in-top { background: #5EEAD4; box-shadow: 0 0 16px rgba(94,234,212,1); }
+              #es-cam-marker.in-bot { background: #F472B6; box-shadow: 0 0 16px rgba(244,114,182,1); }
+
+              #es-cam-pct {
+                position: absolute !important;
+                bottom: 6px !important; right: 6px !important;
+                font-family: 'Sora', system-ui, sans-serif !important;
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                color: #EEEFFC !important;
+                background: rgba(5,5,12,0.75) !important;
+                padding: 2px 6px !important;
+                border-radius: 6px !important;
+                backdrop-filter: blur(4px) !important;
+                z-index: 11;
+                opacity: 0;
+                transition: opacity 0.2s;
+                letter-spacing: 0.04em;
+              }
+              #es-cam-pct.visible { opacity: 1; }
           `;
           document.head.appendChild(style);
         }
@@ -273,10 +383,32 @@
 
           const statusText = document.createElement('div');
           statusText.id = 'eyescroll-status';
-          statusText.textContent = 'Iniciando cámara...';
+          statusText.textContent = 'Iniciando camara...';
+
+          // In-camera gauge
+          const gauge = document.createElement('div');
+          gauge.id = 'es-cam-gauge';
+          const zoneTop = document.createElement('div');
+          zoneTop.className = 'es-cam-zone es-cam-zone-top';
+          zoneTop.id = 'es-cam-zone-top';
+          const zoneBot = document.createElement('div');
+          zoneBot.className = 'es-cam-zone es-cam-zone-bot';
+          zoneBot.id = 'es-cam-zone-bot';
+          const marker = document.createElement('div');
+          marker.id = 'es-cam-marker';
+          gauge.appendChild(zoneTop);
+          gauge.appendChild(zoneBot);
+          gauge.appendChild(marker);
+
+          // Position percentage label
+          const pctLabel = document.createElement('div');
+          pctLabel.id = 'es-cam-pct';
+          pctLabel.textContent = '0%';
 
           vc.appendChild(videoEl);
           vc.appendChild(statusText);
+          vc.appendChild(gauge);
+          vc.appendChild(pctLabel);
 
           const dot = document.createElement('div');
           dot.id = 'webgazerGazeDot';
@@ -306,8 +438,8 @@
               } catch (e) {
                 const st = document.getElementById('eyescroll-status');
                 if (st) {
-                  st.textContent = '❌ ' + (e.message || 'Error').substring(0, 35);
-                  st.style.background = 'rgba(248, 113, 113, 0.8)';
+                  st.textContent = (e.message || 'Error').substring(0, 35);
+                  st.style.background = 'rgba(244, 114, 182, 0.7)';
                 }
                 console.error('Hands AI Error:', e);
               }
